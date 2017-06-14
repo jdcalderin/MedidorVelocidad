@@ -13,5 +13,13 @@
         android:layout_height="495dp"
         android:orientation="vertical"
         tools:layout_editor_absoluteX="8dp"
-        tools:layout_editor_absoluteY="8dp"></LinearLayout>
+        tools:layout_editor_absoluteY="8dp">
+
+        <com.github.anastr.speedviewlib.SpeedView
+            android:id="@+id/speedView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+
+    </LinearLayout>
 </android.support.constraint.ConstraintLayout>

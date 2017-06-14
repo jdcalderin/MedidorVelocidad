@@ -2,6 +2,7 @@ package com.example.josedaniel.medidorvelocidad;
 
 import android.bluetooth.BluetoothAdapter;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -20,12 +21,28 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+import com.github.anastr.speedviewlib.base.Speedometer;
+
+import java.text.DecimalFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.StringTokenizer;
+import java.util.concurrent.TimeUnit;
+
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener,SensorEventListener {
 
     BluetoothAdapter adaptdorBlue;
     private SensorManager mSensorManager;
     private  boolean BANDERA_SENSOR = false;
+    public static final String PREFS_NAME = "configuracionbasica";
+    private static Date  tinicial = new Date();
+    private static Date  tfinal  = new Date()  ;
+    private static String masa = "";
+    private static String  longirutd ="";
+    private static String  distancia = "";
+    Speedometer speedometer;
+
 
     private Sensor mSensor;
     @Override
@@ -34,13 +51,27 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        this.tinicial = new Date();
+        this.tfinal = new Date();
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                //Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+                     //   .setAction("Action", null).show();
+                if (BANDERA_SENSOR)
+                {
+                    BANDERA_SENSOR = false;
+                    Toast.makeText(getApplication(), "El sensor se desactivo: ", Toast.LENGTH_LONG).show();
+                    speedometer.speedTo(0);
+                }
+                else
+                {
+                    BANDERA_SENSOR = true   ;
+                    Toast.makeText(getApplication(), "El sensor se activo: ", Toast.LENGTH_LONG).show();
+                    speedometer.speedTo(0);
+                }
             }
         });
 
@@ -58,6 +89,23 @@ public class MainActivity extends AppCompatActivity
         mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 
         mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
+
+        // obtener informacion basica
+
+        SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
+        String masa = settings.getString("masa","");
+        String longirutd =settings.getString("longitud","");
+        String distancia = settings.getString("distancia","");
+
+        speedometer = (Speedometer)findViewById(R.id.speedView);
+
+        speedometer.speedTo(0);
+
+        this.masa  = masa;
+        this.longirutd = longirutd;
+        this.distancia = distancia;
+       // Toast.makeText(this, "masa: " + masa +"\n" , Toast.LENGTH_LONG).show();
+
 
 
     }
@@ -151,6 +199,8 @@ public class MainActivity extends AppCompatActivity
     protected void onResume() {
 
         super.onResume();
+        this.tinicial = new Date();
+        this.tfinal = new Date();
 
         mSensorManager.registerListener(this, mSensor,
         SensorManager.SENSOR_DELAY_NORMAL);
@@ -160,6 +210,8 @@ public class MainActivity extends AppCompatActivity
     protected void onPause() {
 
         super.onPause();
+    this.tinicial = new Date();
+        this.tfinal = new Date();
 
       mSensorManager.unregisterListener(this);
 
@@ -167,15 +219,35 @@ public class MainActivity extends AppCompatActivity
 
 
     public void onSensorChanged(SensorEvent event) {
+        // Date tinicial  ;
+       // Date tfinal  ;
+        Calendar c = Calendar.getInstance();
+       // int seconds = c.get(Calendar.SECOND);
+
+
+
+
+
 
         if (BANDERA_SENSOR == true) {
             if (event.values[0] == 0) {
 
-                Toast.makeText(this, "Sensor activo", Toast.LENGTH_LONG).show();
+               // oast.makeText(this, "Sensor activo", Toast.LENGTH_LONG).show();
+                tinicial = c.getTime();
+               // Toast.makeText(this, "Sensor activo" +  c.getTime() , Toast.LENGTH_LONG).show();
 
             } else {
 
-                Toast.makeText(this, "foco perdido", Toast.LENGTH_LONG).show();
+                tfinal = c.getTime();
+                DecimalFormat df = new DecimalFormat("#.####");
+                long diffInMs = tfinal.getTime() - tinicial.getTime();
+                double seconds = diffInMs / 1000.0;
+                Double velocidad =  (Double)Double.parseDouble(longirutd)/seconds;
+
+
+                speedometer.speedTo(Float.parseFloat(velocidad.toString()) );
+                        //long diffInSec = TimeUnit.MILLISECONDS.toSeconds(diffInMs);
+                Toast.makeText(this, "la velocidad es  " + String.format("%.2f", velocidad)  , Toast.LENGTH_LONG).show();
 
             }
         }
